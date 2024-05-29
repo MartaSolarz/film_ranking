@@ -1,4 +1,4 @@
-# Main file to run the app
+"""Main script to run the data analysis app."""
 import argparse
 import cProfile
 import pstats
@@ -15,13 +15,19 @@ def save_profile(profiler: cProfile.Profile, output_file='profile_results.txt'):
 
     :return: None
     """
-    with open(output_file, 'w') as f:
+    with open(output_file, 'w', encoding='utf-8') as f:
         stats = pstats.Stats(profiler, stream=f)
         stats.sort_stats('cumulative')
         stats.print_stats()
 
 
-def main():
+def main() -> None:
+    """
+    Main function to run the data analysis app.
+
+    :return: None
+    :return: None
+    """
     profiler = cProfile.Profile()
     profiler.enable()
 

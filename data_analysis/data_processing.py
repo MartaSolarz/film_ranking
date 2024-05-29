@@ -1,3 +1,4 @@
+"""Load and process the data from the CSV file."""
 import pandas as pd
 
 
