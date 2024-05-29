@@ -21,7 +21,7 @@ jobs:
     - name: Lint with pylint
       run: |
         # add ignoring TODOs
-        pylint --disable=R,C,W1203 **/*.py
+        pylint --disable=W0511 **/*.py
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
