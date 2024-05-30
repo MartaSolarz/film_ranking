@@ -14,19 +14,22 @@
 
 ## Description and project explanation
 
-TODO
+Project contains three different analysis of the data from IMDb.
+
+1. **Top 10 countries based on the N the best rated movies.**
 
 ## How to run the program?
 
 ```bash
-    python main.py [-h] [-start START_YEAR] [-end END_YEAR] film_data ranking_film_data crew_data
+    python main.py [-h] [-start START_YEAR] [-end END_YEAR] basics_title_data rating_title_data akas_title_data countries_name_data
 ```
 
 **Arguments:**
 
-- film_data: path to the film data file
-- ranking_film_data: path to the ranking film data file
-- crew_data: path to the crew data file
+- basics_title_data: path to the file with basic information about the title
+- rating_title_data: path to the file with rating information about the title
+- akas_title_data: path to the file with alternative titles
+- countries_name_data: path to the file with countries names
 - -start: start year
 - -end: end year
 - -h: help
@@ -34,7 +37,7 @@ TODO
 **Example:**
 
 ```bash
-    python main.py -start 2010 -end 2019 ./data/title.basics.tsv ./data/title.ratings.tsv ./data/title.crew.tsv
+    python main.py -start 2010 -end 2019 ./data/title.basics.tsv ./data/title.ratings.tsv ./data/title.akas.tsv ./data/countries.csv
 ```
 
 ## How to run the tests?

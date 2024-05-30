@@ -2,8 +2,10 @@
 import argparse
 import cProfile
 import pstats
+import logging
 
-from data_analysis.data_processing import load_and_process_data, merge_data
+import data_analysis.data_processing as dp
+from data_analysis.analysis import perform_task_1
 
 
 def save_profile(profiler: cProfile.Profile, output_file='profile_results.txt'):
@@ -21,35 +23,55 @@ def save_profile(profiler: cProfile.Profile, output_file='profile_results.txt'):
         stats.print_stats()
 
 
-def main() -> None:
+def main(args: argparse.Namespace) -> None:
     """
-    Main function to run the data analysis app.
+    Main function to run the film data analysis app.
 
-    :return: None
+    :param args: argparse.Namespace: Arguments from the command line
     :return: None
     """
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s: %(message)s')
+    logging.info("Starting the data analysis app with profiler...")
+
     profiler = cProfile.Profile()
     profiler.enable()
 
-    parser = argparse.ArgumentParser('App to analyze cinematic impact')
-    parser.add_argument('film_data', help='Path to the film data in CSV file')
-    parser.add_argument('ranking_film_data', help='Path to the ranking film data in CSV file')
-    parser.add_argument('crew_data', help='Path to the crew data in CSV file')
-    parser.add_argument('-start', type=int, default=1960, help='Start year for analysis')
-    parser.add_argument('-end', type=int, default=2024, help='End year for analysis')
+    logging.info("Loading data...")
+    basics = dp.load_data(args.basics_title_data)
+    ratings = dp.load_data(args.rating_title_data)
+    akas = dp.load_data(args.akas_title_data)
+    countries = dp.load_data(args.countries_name_data)
 
-    args = parser.parse_args()
+    logging.info("Processing data...")
+    basics_selected, ratings_selected, akas_selected, countries_selected = dp.keep_interesting_columns(
+        basics, ratings, akas, countries,
+    )
+    basics_filtered = dp.filter_years(basics_selected, args.start, args.end)
+    merged_data = dp.merge_and_clean_data(basics_filtered, ratings_selected, akas_selected, countries_selected)
 
-    films_df = load_and_process_data(args.film_data)
-    ranking_films_df = load_and_process_data(args.ranking_film_data)
-    crew_df = load_and_process_data(args.crew_data)
-
-    merged_data = merge_data(films_df, ranking_films_df, crew_df)
+    logging.info("Performing analysis...")
+    perform_task_1(merged_data)
 
     profiler.disable()
-
-    print(merged_data.sample(2))
+    save_profile(profiler)
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser(description='Film data analysis app')
+    parser.add_argument('basics_title_data', help='Path to the basics title data in CSV or TSV file')
+    parser.add_argument('rating_title_data', help='Path to the ranking title data in CSV or TSV file')
+    parser.add_argument('akas_title_data', help='Path to the title akas data in CSV or TSV file')
+    parser.add_argument('countries_name_data', help='Path to the countries name data in CSV or TSV file')
+    parser.add_argument('-start', type=int, default=None, help='Start year for analysis')
+    parser.add_argument('-end', type=int, default=None, help='End year for analysis')
+
+    try:
+        main(parser.parse_args())
+    except ValueError as e:
+        print(e)
+    except FileNotFoundError as e:
+        print(f"File not found: {e.filename}")
+    except KeyError as e:
+        print(f"Column not found: {e}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
