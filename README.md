@@ -21,7 +21,7 @@ Project contains three different analysis of the data from IMDb.
 ## How to run the program?
 
 ```bash
-    python main.py [-h] [-start START_YEAR] [-end END_YEAR] basics_title_data rating_title_data akas_title_data countries_name_data
+    python main.py [-h] [-start START_YEAR] [-end END_YEAR] basics_title_data rating_title_data akas_title_data countries_name_data population_data gdp_data
 ```
 
 **Arguments:**
@@ -30,6 +30,8 @@ Project contains three different analysis of the data from IMDb.
 - rating_title_data: path to the file with rating information about the title
 - akas_title_data: path to the file with alternative titles
 - countries_name_data: path to the file with countries names
+- population_data: path to the file with population data
+- gdp_data: path to the file with gdp data
 - -start: start year
 - -end: end year
 - -h: help
@@ -37,7 +39,7 @@ Project contains three different analysis of the data from IMDb.
 **Example:**
 
 ```bash
-    python main.py -start 2010 -end 2019 ./data/title.basics.tsv ./data/title.ratings.tsv ./data/title.akas.tsv ./data/countries.csv
+    python main.py -start 2010 -end 2019 ./data/title.basics.tsv ./data/title.ratings.tsv ./data/title.akas.tsv ./data/countries.csv ./data/population.csv ./data/gdp.csv
 ```
 
 ## How to run the tests?

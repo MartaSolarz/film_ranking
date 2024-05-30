@@ -34,15 +34,15 @@ def get_top_n_movies_per_country(movies_df: pd.DataFrame, n: int) -> pd.DataFram
     countries_with_at_least_n_films = country_movie_counts[country_movie_counts >= n].index
     valid_df = movies_df[movies_df['region'].isin(countries_with_at_least_n_films)]
     valid_df = valid_df.sort_values(
-        by=['name', 'region', 'averageRating', 'numVotes'],
+        by=['countryName', 'region', 'averageRating', 'numVotes'],
         ascending=[True, True, False, False],
     )
 
     top_n_movies_df = valid_df.groupby('region').head(n)
-    top_n_ratings_df = top_n_movies_df.groupby(['name', 'region']).agg({
+    top_n_ratings_df = top_n_movies_df.groupby(['countryName', 'region']).agg({
         'averageRating': 'mean',
         'numVotes': 'sum',
-        'tconst': 'count'
+        'title': 'count'
     }).reset_index()
 
     top_n_ratings_df.columns = ['country_name', 'country_code', 'avg_rating', 'total_votes', 'film_count']

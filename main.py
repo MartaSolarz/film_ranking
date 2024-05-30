@@ -41,19 +41,24 @@ def main(args: argparse.Namespace) -> None:
     ratings = dp.load_data(args.rating_title_data)
     akas = dp.load_data(args.akas_title_data)
     countries = dp.load_data(args.countries_name_data)
+    population = dp.load_data(args.population_data)
+    gdp = dp.load_data(args.gdp_data)
 
     logging.info("Processing data...")
-    basics_selected, ratings_selected, akas_selected, countries_selected = dp.keep_interesting_columns(
-        basics, ratings, akas, countries,
+    merged_data = dp.process_data_and_merge(
+        basics, ratings, akas, countries, population, gdp,
+        args.start, args.end,
     )
-    basics_filtered = dp.filter_years(basics_selected, args.start, args.end)
-    merged_data = dp.merge_and_clean_data(basics_filtered, ratings_selected, akas_selected, countries_selected)
 
     logging.info("Performing analysis...")
     perform_task_1(merged_data)
 
     profiler.disable()
+
+    logging.info("Saving profile results...")
     save_profile(profiler)
+
+    logging.info("Successfully finished the data analysis app!")
 
 
 if __name__ == '__main__':
@@ -62,6 +67,8 @@ if __name__ == '__main__':
     parser.add_argument('rating_title_data', help='Path to the ranking title data in CSV or TSV file')
     parser.add_argument('akas_title_data', help='Path to the title akas data in CSV or TSV file')
     parser.add_argument('countries_name_data', help='Path to the countries name data in CSV or TSV file')
+    parser.add_argument('population_data', help='Path to the population data in CSV or TSV file')
+    parser.add_argument('gdp_data', help='Path to the GDP data in CSV or TSV file')
     parser.add_argument('-start', type=int, default=None, help='Start year for analysis')
     parser.add_argument('-end', type=int, default=None, help='End year for analysis')
 
