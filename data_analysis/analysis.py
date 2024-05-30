@@ -45,5 +45,7 @@ def get_top_n_movies_per_country(movies_df: pd.DataFrame, n: int) -> pd.DataFram
         'title': 'count'
     }).reset_index()
 
-    top_n_ratings_df.columns = ['country_name', 'country_code', 'avg_rating', 'total_votes', 'film_count']
+    top_n_ratings_df.columns = [
+        'country_name', 'country_code', 'avg_rating', 'total_votes', 'film_count',
+    ]
     return top_n_ratings_df
