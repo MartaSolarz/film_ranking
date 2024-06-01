@@ -21,7 +21,7 @@ jobs:
     - name: Lint with pylint
       run: |
         # add ignoring TODOs
-        pylint --disable=W0511,R0913,W0718 **/*.py
+        pylint --disable=W0511,R0913,W0718,W0621 **/*.py
     - name: Test with pytest
       run: |
         pytest

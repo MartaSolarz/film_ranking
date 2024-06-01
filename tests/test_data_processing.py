@@ -3,20 +3,20 @@ import pytest
 import pandas as pd
 import numpy as np
 
-from data_analysis.data_processing import load_data, process_world_bank_data, filter_years
+import data_analysis.data_processing as dp
 
 
 # Test load_data function
 def test_load_data_csv():
     """Test loading a CSV file."""
-    df = load_data("./tests/mocks/test.csv")
+    df = dp.load_data("./tests/mocks/test.csv")
     expected_df = pd.DataFrame({"col1": [1, 3], "col2": [2, 4]})
     pd.testing.assert_frame_equal(df, expected_df)
 
 
 def test_load_data_tsv():
     """Test loading a TSV file."""
-    df = load_data("./tests/mocks/test.tsv")
+    df = dp.load_data("./tests/mocks/test.tsv")
     expected_df = pd.DataFrame({"col1": [1, 3], "col2": [2, 4]})
     pd.testing.assert_frame_equal(df, expected_df)
 
@@ -26,30 +26,32 @@ def test_load_data_invalid_format():
     with pytest.raises(
             ValueError,
             match="Invalid file format. Only CSV and TSV files are supported."):
-        load_data("invalid_file_format.txt")
+        dp.load_data("invalid_file_format.txt")
 
 
 def test_load_data_empty_file():
     """Test loading an empty file."""
     with pytest.raises(ValueError, match="The file is empty."):
-        load_data("./tests/mocks/empty.csv")
+        dp.load_data("./tests/mocks/empty.csv")
 
 
 # Test process_world_bank_data function
+@pytest.fixture
+def mock_world_bank_data():
+    """Fixture for the World Bank data."""
+    return pd.DataFrame({
+        'Country Code': ['USA', 'GBR', 'FRA'],
+        'Series Name': ['Population, total', 'Population, total', 'Population, total'],
+        'Series Code': ['SP.POP.TOTL', 'SP.POP.TOTL', 'SP.POP.TOTL'],
+        'Country Name': ['United States', 'United Kingdom', 'France'],
+        '2000 [YR2000]': [300000000, 60000000, 65000000],
+        '2001 [YR2001]': [305000000, 60500000, 65500000]
+    })
 
-MOCK_WORLD_BANK_DATA = pd.DataFrame({
-    'Country Code': ['USA', 'GBR', 'FRA'],
-    'Series Name': ['Population, total', 'Population, total', 'Population, total'],
-    'Series Code': ['SP.POP.TOTL', 'SP.POP.TOTL', 'SP.POP.TOTL'],
-    'Country Name': ['United States', 'United Kingdom', 'France'],
-    '2000 [YR2000]': [300000000, 60000000, 65000000],
-    '2001 [YR2001]': [305000000, 60500000, 65500000]
-})
 
-
-def test_process_world_bank_data():
+def test_process_world_bank_data(mock_world_bank_data):
     """Test processing the World Bank data - happy path."""
-    processed_df = process_world_bank_data(MOCK_WORLD_BANK_DATA, 'Population')
+    processed_df = dp.process_world_bank_data(mock_world_bank_data.copy(), 'Population')
 
     expected_df = pd.DataFrame({
         'Country Code': ['USA', 'GBR', 'FRA', 'USA', 'GBR', 'FRA'],
@@ -57,23 +59,23 @@ def test_process_world_bank_data():
         'Population': [300000000, 60000000, 65000000, 305000000, 60500000, 65500000]
     })
 
-    pd.testing.assert_frame_equal(processed_df, expected_df)
+    pd.testing.assert_frame_equal(processed_df.reset_index(drop=True), expected_df)
 
 
-def test_process_world_bank_data_missing_column():
+def test_process_world_bank_data_missing_column(mock_world_bank_data):
     """Test processing the World Bank data with a missing column."""
-    incomplete_df = MOCK_WORLD_BANK_DATA.drop(columns=['Series Name'])
+    incomplete_df = mock_world_bank_data.drop(columns=['Series Name'])
 
     with pytest.raises(KeyError, match=r"\['Series Name'\] not found in axis"):
-        process_world_bank_data(incomplete_df, 'Population')
+        dp.process_world_bank_data(incomplete_df, 'Population')
 
 
-def test_process_world_bank_data_with_nan():
+def test_process_world_bank_data_with_nan(mock_world_bank_data):
     """Test processing the World Bank data with NaN values."""
-    nan_df = MOCK_WORLD_BANK_DATA.copy()
+    nan_df = mock_world_bank_data.copy()
     nan_df.at[0, '2000 [YR2000]'] = np.nan
 
-    processed_df = process_world_bank_data(nan_df, 'Population')
+    processed_df = dp.process_world_bank_data(nan_df, 'Population')
 
     expected_df = pd.DataFrame({
         'Country Code': ['GBR', 'FRA', 'USA', 'GBR', 'FRA'],
@@ -85,31 +87,44 @@ def test_process_world_bank_data_with_nan():
 
 
 # Test filter_years function
-
-MOCK_BASICS_DF = pd.DataFrame({
-    'tconst': ['tt0000001', 'tt0000002', 'tt0000003', 'tt0000004'],
-    'titleType': ['movie', 'movie', 'movie', 'movie'],
-    'primaryTitle': ['Title1', 'Title2', 'Title3', 'Title4'],
-    'startYear': [2000, 2001, 2002, 2003]
-})
-
-MOCK_POPULATION_DF = pd.DataFrame({
-    'Country Code': ['DEU', 'USA', 'GBR', 'FRA'],
-    'Year': [1999, 2000, 2001, 2002],
-    'Population': [80000000, 300000000, 60000000, 65000000]
-})
-
-MOCK_GDP_DF = pd.DataFrame({
-    'Country Code': ['USA', 'GBR', 'FRA'],
-    'Year': [2000, 2001, 2002],
-    'GDP': [1000000000, 200000000, 300000000]
-})
+@pytest.fixture
+def mock_basics_df():
+    """Fixture for the basics dataframe."""
+    return pd.DataFrame({
+        'tconst': ['tt0000001', 'tt0000002', 'tt0000003', 'tt0000004'],
+        'titleType': ['movie', 'movie', 'movie', 'movie'],
+        'primaryTitle': ['Title1', 'Title2', 'Title3', 'Title4'],
+        'startYear': [2000, 2001, 2002, 2003]
+    })
 
 
-def test_filter_years_happy_path():
+@pytest.fixture
+def mock_population_df():
+    """Fixture for the population dataframe."""
+    return pd.DataFrame({
+     'Country Code': ['DEU', 'USA', 'GBR', 'FRA'],
+     'Year': [1999, 2000, 2001, 2002],
+     'Population': [80000000, 300000000, 60000000, 65000000]
+    })
+
+
+@pytest.fixture
+def mock_gdp_df():
+    """Fixture for the GDP dataframe."""
+    return pd.DataFrame({
+        'Country Code': ['USA', 'GBR', 'FRA'],
+        'Year': [2000, 2001, 2002],
+        'GDP': [1000000000, 200000000, 300000000]
+    })
+
+
+def test_filter_years_happy_path(
+        mock_basics_df, mock_population_df, mock_gdp_df
+):
     """Test filtering the dataframes - happy path."""
-    filtered_basics, filtered_population, filtered_gdp = filter_years(
-        MOCK_BASICS_DF, MOCK_POPULATION_DF, MOCK_GDP_DF, 2000, 2002
+    filtered_basics, filtered_population, filtered_gdp = dp.filter_years(
+        mock_basics_df.copy(), mock_population_df.copy(), mock_gdp_df.copy(),
+        2000, 2002
     )
 
     expected_basics = pd.DataFrame({
@@ -132,11 +147,13 @@ def test_filter_years_happy_path():
     })
 
     pd.testing.assert_frame_equal(filtered_basics.reset_index(drop=True), expected_basics)
-    pd.testing.assert_frame_equal(filtered_population.reset_index(drop=True), expected_population)
+    pd.testing.assert_frame_equal(
+        filtered_population.reset_index(drop=True), expected_population,
+    )
     pd.testing.assert_frame_equal(filtered_gdp.reset_index(drop=True), expected_gdp)
 
 
-def test_filter_years_no_common_years():
+def test_filter_years_no_common_years(mock_basics_df):
     """Test filtering the dataframes with no common years."""
     mock_population_df_no_common = pd.DataFrame({
         'Country Code': ['USA', 'GBR', 'FRA'],
@@ -152,15 +169,18 @@ def test_filter_years_no_common_years():
     with pytest.raises(
             ValueError,
             match="No common years found between the datasets."):
-        filter_years(
-            MOCK_BASICS_DF, mock_population_df_no_common,
+        dp.filter_years(
+            mock_basics_df, mock_population_df_no_common,
             mock_gdp_df_no_common, 2000, 2002)
 
 
-def test_filter_years_within_range():
+def test_filter_years_within_range(
+        mock_basics_df, mock_population_df, mock_gdp_df
+):
     """Test filtering the dataframes within a provided range."""
-    filtered_basics, filtered_population, filtered_gdp = filter_years(
-        MOCK_BASICS_DF, MOCK_POPULATION_DF, MOCK_GDP_DF, 2001, 2001
+    filtered_basics, filtered_population, filtered_gdp = dp.filter_years(
+        mock_basics_df, mock_population_df, mock_gdp_df,
+        2001, 2001
     )
 
     expected_basics = pd.DataFrame({
@@ -183,11 +203,15 @@ def test_filter_years_within_range():
     })
 
     pd.testing.assert_frame_equal(filtered_basics.reset_index(drop=True), expected_basics)
-    pd.testing.assert_frame_equal(filtered_population.reset_index(drop=True), expected_population)
+    pd.testing.assert_frame_equal(
+        filtered_population.reset_index(drop=True), expected_population,
+    )
     pd.testing.assert_frame_equal(filtered_gdp.reset_index(drop=True), expected_gdp)
 
 
-def test_filter_years_missing_years():
+def test_filter_years_missing_years(
+        mock_population_df, mock_gdp_df,
+):
     """Test filtering the dataframes with missing years."""
     mock_basics_df_missing_years = pd.DataFrame({
         'tconst': ['tt0000001', 'tt0000002', 'tt0000003'],
@@ -196,8 +220,9 @@ def test_filter_years_missing_years():
         'startYear': [2000, np.NaN, 2002]
     })
 
-    filtered_basics, filtered_population, filtered_gdp = filter_years(
-        mock_basics_df_missing_years, MOCK_POPULATION_DF, MOCK_GDP_DF, 2000, 2002
+    filtered_basics, filtered_population, filtered_gdp = dp.filter_years(
+        mock_basics_df_missing_years, mock_population_df,
+        mock_gdp_df, 2000, 2002
     )
 
     expected_basics = pd.DataFrame({
@@ -220,9 +245,233 @@ def test_filter_years_missing_years():
     })
 
     pd.testing.assert_frame_equal(filtered_basics.reset_index(drop=True), expected_basics)
-    pd.testing.assert_frame_equal(filtered_population.reset_index(drop=True), expected_population)
+    pd.testing.assert_frame_equal(
+        filtered_population.reset_index(drop=True), expected_population,
+    )
     pd.testing.assert_frame_equal(filtered_gdp.reset_index(drop=True), expected_gdp)
 
+
 # Test merge_data function
+@pytest.fixture
+def basics_df():
+    """Fixture for the basics dataframe."""
+    return pd.DataFrame({
+        'tconst': ['tt0000001', 'tt0000002', 'tt0000003'],
+        'titleType': ['movie', 'movie', 'movie'],
+        'primaryTitle': ['Title1', 'Title2', 'Title3'],
+        'startYear': [2000, 2001, 2002]
+    })
+
+
+@pytest.fixture
+def ratings_df():
+    """Fixture for the ratings dataframe."""
+    return pd.DataFrame({
+        'tconst': ['tt0000001', 'tt0000002', 'tt0000003'],
+        'averageRating': [7.5, 8.0, 6.5],
+        'numVotes': [1500, 3000, 2500]
+    })
+
+
+@pytest.fixture
+def akas_df():
+    """Fixture for the akas dataframe."""
+    return pd.DataFrame({
+        'titleId': ['tt0000001', 'tt0000002', 'tt0000003'],
+        'region': ['US', 'GB', 'FR']
+    })
+
+
+@pytest.fixture
+def countries_df():
+    """Fixture for the countries dataframe."""
+    return pd.DataFrame({
+        'alpha-2': ['US', 'GB', 'FR'],
+        'alpha-3': ['USA', 'GBR', 'FRA'],
+        'name': ['United States', 'United Kingdom', 'France']
+    })
+
+
+@pytest.fixture
+def population_df():
+    """Fixture for the population dataframe."""
+    return pd.DataFrame({
+        'Country Code': ['USA', 'GBR', 'FRA'],
+        'Year': [2000, 2001, 2002],
+        'Population': [300000000, 60000000, 65000000]
+    })
+
+
+@pytest.fixture
+def gdp_df():
+    """Fixture for the GDP dataframe."""
+    return pd.DataFrame({
+        'Country Code': ['USA', 'GBR', 'FRA'],
+        'Year': [2000, 2001, 2002],
+        'GDP': [1000000000, 200000000, 300000000]
+    })
+
+
+def test_merge_data_happy_path(
+        basics_df, ratings_df, akas_df, countries_df, population_df, gdp_df,
+):
+    """Test merging dataframes - happy path."""
+    merged_df = dp.merge_data(basics_df, ratings_df, akas_df, countries_df, population_df, gdp_df)
+
+    expected_df = pd.DataFrame({
+        'titleId': ['tt0000001', 'tt0000002', 'tt0000003'],
+        'region': ['US', 'GB', 'FR'],
+        'tconst': ['tt0000001', 'tt0000002', 'tt0000003'],
+        'titleType': ['movie', 'movie', 'movie'],
+        'primaryTitle': ['Title1', 'Title2', 'Title3'],
+        'startYear': [2000, 2001, 2002],
+        'averageRating': [7.5, 8.0, 6.5],
+        'numVotes': [1500, 3000, 2500],
+        'alpha-2': ['US', 'GB', 'FR'],
+        'alpha-3': ['USA', 'GBR', 'FRA'],
+        'name': ['United States', 'United Kingdom', 'France'],
+        'Country Code_x': ['USA', 'GBR', 'FRA'],
+        'Year_x': [2000, 2001, 2002],
+        'Population': [300000000, 60000000, 65000000],
+        'Country Code_y': ['USA', 'GBR', 'FRA'],
+        'Year_y': [2000, 2001, 2002],
+        'GDP': [1000000000, 200000000, 300000000]
+    })
+
+    pd.testing.assert_frame_equal(merged_df, expected_df)
+
+
+def test_merge_data_missing_column(
+        basics_df, ratings_df, akas_df, countries_df, population_df, gdp_df,
+):
+    """Test merging dataframes with a missing column."""
+    incomplete_akas_df = akas_df.drop(columns=['region'])
+
+    with pytest.raises(KeyError):
+        dp.merge_data(
+            basics_df, ratings_df, incomplete_akas_df, countries_df, population_df, gdp_df,
+        )
+
+
+def test_merge_data_missing_data(
+        basics_df, ratings_df, akas_df, countries_df, population_df, gdp_df,
+):
+    """Test merging dataframes with missing data."""
+    incomplete_population_df = population_df.drop(population_df.index[1])
+
+    merged_df = dp.merge_data(
+        basics_df, ratings_df, akas_df, countries_df, incomplete_population_df, gdp_df,
+    )
+
+    expected_df = pd.DataFrame({
+        'titleId': ['tt0000001', 'tt0000003'],
+        'region': ['US', 'FR'],
+        'tconst': ['tt0000001', 'tt0000003'],
+        'titleType': ['movie', 'movie'],
+        'primaryTitle': ['Title1', 'Title3'],
+        'startYear': [2000, 2002],
+        'averageRating': [7.5, 6.5],
+        'numVotes': [1500, 2500],
+        'alpha-2': ['US', 'FR'],
+        'alpha-3': ['USA', 'FRA'],
+        'name': ['United States', 'France'],
+        'Country Code_x': ['USA', 'FRA'],
+        'Year_x': [2000, 2002],
+        'Population': [300000000, 65000000],
+        'Country Code_y': ['USA', 'FRA'],
+        'Year_y': [2000, 2002],
+        'GDP': [1000000000, 300000000]
+    })
+
+    pd.testing.assert_frame_equal(merged_df, expected_df, check_dtype=False)
+
+
+def test_merge_data_type_mismatch(
+        basics_df, ratings_df, akas_df, countries_df, population_df, gdp_df,
+):
+    """Test merging dataframes with type mismatch."""
+    basics_df['startYear'] = basics_df['startYear'].astype(str)  # Introduce a type mismatch
+
+    with pytest.raises(ValueError):
+        dp.merge_data(basics_df, ratings_df, akas_df, countries_df, population_df, gdp_df)
+
 
 # Test clean function
+@pytest.fixture
+def merged_df_fixture():
+    """Fixture for the merged dataframe."""
+    return pd.DataFrame({
+        'tconst': ['tt0000001', 'tt0000002', 'tt0000003', 'tt0000004'],
+        'titleId': ['tt0000001', 'tt0000002', 'tt0000003', 'tt0000004'],
+        'titleType': ['movie', 'movie', 'short', 'movie'],
+        'primaryTitle': ['Title1', 'Title2', 'Title3', 'Title4'],
+        'startYear': [2000, 2001, 2002, 2003],
+        'averageRating': [7.5, 8.0, 6.5, 9.0],
+        'numVotes': [1500, 3000, 2500, 4000],
+        'alpha-2': ['US', 'GB', 'FR', 'DE'],
+        'alpha-3': ['USA', 'GBR', 'FRA', 'DEU'],
+        'region': ['US', 'GB', 'FR', 'DE'],
+        'Country Code_x': ['USA', 'GBR', 'FRA', 'DEU'],
+        'Country Code_y': ['USA', 'GBR', 'FRA', 'DEU'],
+        'name': ['United States', 'United Kingdom', 'France', 'Germany'],
+        'Year_x': [2000, 2001, 2002, 2003],
+        'Year_y': [2000, 2001, 2002, 2003],
+        'Population': [300000000, 60000000, 65000000, 80000000],
+        'GDP': [1000000000, 200000000, 300000000, 400000000]
+    })
+
+
+def test_clean_happy_path(merged_df_fixture):
+    """Test cleaning the merged dataframe - happy path."""
+    cleaned_df = dp.clean(merged_df_fixture)
+
+    expected_df = pd.DataFrame({
+        'title_id': ['tt0000001', 'tt0000002', 'tt0000004'],
+        'title': ['Title1', 'Title2', 'Title4'],
+        'average_rating': [7.5, 8.0, 9.0],
+        'num_of_votes': [1500, 3000, 4000],
+        'country_code': ['US', 'GB', 'DE'],
+        'country_name': ['United States', 'United Kingdom', 'Germany'],
+        'year': [2000, 2001, 2003],
+        'population': [300000000, 60000000, 80000000],
+        'gdp': [1000000000, 200000000, 400000000],
+        'gdp_per_population': [3.333333, 3.333333, 5.000000]
+    }).set_index('title_id')
+
+    pd.testing.assert_frame_equal(cleaned_df, expected_df)
+
+
+def test_clean_missing_column(merged_df_fixture):
+    """Test cleaning the merged dataframe with a missing column."""
+    incomplete_df = merged_df_fixture.drop(columns=['Country Code_x'])
+
+    with pytest.raises(KeyError):
+        dp.clean(incomplete_df)
+
+
+def test_clean_with_duplicates(merged_df_fixture):
+    """Test cleaning the merged dataframe with duplicates."""
+    duplicated_df = pd.concat([merged_df_fixture, merged_df_fixture])
+
+    expected_df = pd.DataFrame({
+        'title_id': ['tt0000001', 'tt0000002', 'tt0000004'],
+        'title': ['Title1', 'Title2', 'Title4'],
+        'average_rating': [7.5, 8.0, 9.0],
+        'num_of_votes': [1500, 3000, 4000],
+        'country_code': ['US', 'GB', 'DE'],
+        'country_name': ['United States', 'United Kingdom', 'Germany'],
+        'year': [2000, 2001, 2003],
+        'population': [300000000, 60000000, 80000000],
+        'gdp': [1000000000, 200000000, 400000000],
+        'gdp_per_population': [3.333333, 3.333333, 5.000000]
+    }).set_index('title_id')
+
+    pd.testing.assert_frame_equal(dp.clean(duplicated_df), expected_df)
+
+
+def test_clean_type_mismatch(merged_df_fixture):
+    """Test cleaning the merged dataframe with type mismatch."""
+    merged_df_fixture['GDP'] = merged_df_fixture['GDP'].astype(str)
+
+    with pytest.raises(TypeError):
+        dp.clean(merged_df_fixture)

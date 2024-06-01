@@ -210,8 +210,10 @@ def clean(merged_df: pd.DataFrame) -> pd.DataFrame:
         columns=['tconst', 'titleType', 'startYear', 'alpha-2', 'alpha-3',
                  'Country Code_x', 'Country Code_y', 'Year_y'],
     )
-    merged_df.columns = ['title_id', 'country_code', 'title', 'average_rating', 'num_of_votes',
-                         'country_name', 'year', 'population', 'gdp']
+    merged_df.rename(columns={'titleId': 'title_id', 'region': 'country_code',
+                              'Year_x': 'year', 'primaryTitle': 'title', 'name': 'country_name',
+                              'averageRating': 'average_rating', 'numVotes': 'num_of_votes',
+                              'Population': 'population', 'GDP': 'gdp'}, inplace=True)
     merged_df = merged_df.drop_duplicates(
         subset=['country_code', 'title_id', 'year', 'average_rating',
                 'num_of_votes', 'population', 'gdp'],
