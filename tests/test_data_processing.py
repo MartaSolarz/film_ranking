@@ -1,3 +1,4 @@
+"""Tests for the data_processing module."""
 import pytest
 import pandas as pd
 import numpy as np
@@ -7,23 +8,29 @@ from data_analysis.data_processing import load_data, process_world_bank_data, fi
 
 # Test load_data function
 def test_load_data_csv():
+    """Test loading a CSV file."""
     df = load_data("./tests/mocks/test.csv")
     expected_df = pd.DataFrame({"col1": [1, 3], "col2": [2, 4]})
     pd.testing.assert_frame_equal(df, expected_df)
 
 
 def test_load_data_tsv():
+    """Test loading a TSV file."""
     df = load_data("./tests/mocks/test.tsv")
     expected_df = pd.DataFrame({"col1": [1, 3], "col2": [2, 4]})
     pd.testing.assert_frame_equal(df, expected_df)
 
 
 def test_load_data_invalid_format():
-    with pytest.raises(ValueError, match="Invalid file format. Only CSV and TSV files are supported."):
+    """Test loading a file with an invalid format."""
+    with pytest.raises(
+            ValueError,
+            match="Invalid file format. Only CSV and TSV files are supported."):
         load_data("invalid_file_format.txt")
 
 
 def test_load_data_empty_file():
+    """Test loading an empty file."""
     with pytest.raises(ValueError, match="The file is empty."):
         load_data("./tests/mocks/empty.csv")
 
@@ -41,6 +48,7 @@ MOCK_WORLD_BANK_DATA = pd.DataFrame({
 
 
 def test_process_world_bank_data():
+    """Test processing the World Bank data - happy path."""
     processed_df = process_world_bank_data(MOCK_WORLD_BANK_DATA, 'Population')
 
     expected_df = pd.DataFrame({
@@ -53,6 +61,7 @@ def test_process_world_bank_data():
 
 
 def test_process_world_bank_data_missing_column():
+    """Test processing the World Bank data with a missing column."""
     incomplete_df = MOCK_WORLD_BANK_DATA.drop(columns=['Series Name'])
 
     with pytest.raises(KeyError, match=r"\['Series Name'\] not found in axis"):
@@ -60,6 +69,7 @@ def test_process_world_bank_data_missing_column():
 
 
 def test_process_world_bank_data_with_nan():
+    """Test processing the World Bank data with NaN values."""
     nan_df = MOCK_WORLD_BANK_DATA.copy()
     nan_df.at[0, '2000 [YR2000]'] = np.nan
 
@@ -73,8 +83,8 @@ def test_process_world_bank_data_with_nan():
 
     pd.testing.assert_frame_equal(processed_df.reset_index(drop=True), expected_df)
 
-# Test filter_years function
 
+# Test filter_years function
 
 MOCK_BASICS_DF = pd.DataFrame({
     'tconst': ['tt0000001', 'tt0000002', 'tt0000003', 'tt0000004'],
@@ -97,6 +107,7 @@ MOCK_GDP_DF = pd.DataFrame({
 
 
 def test_filter_years_happy_path():
+    """Test filtering the dataframes - happy path."""
     filtered_basics, filtered_population, filtered_gdp = filter_years(
         MOCK_BASICS_DF, MOCK_POPULATION_DF, MOCK_GDP_DF, 2000, 2002
     )
@@ -126,6 +137,7 @@ def test_filter_years_happy_path():
 
 
 def test_filter_years_no_common_years():
+    """Test filtering the dataframes with no common years."""
     mock_population_df_no_common = pd.DataFrame({
         'Country Code': ['USA', 'GBR', 'FRA'],
         'Year': [1989, 2001, 2005],
@@ -137,11 +149,16 @@ def test_filter_years_no_common_years():
         'GDP': [1000000000, 200000000, 300000000]
     })
 
-    with pytest.raises(ValueError, match="No common years found between the datasets."):
-        filter_years(MOCK_BASICS_DF, mock_population_df_no_common, mock_gdp_df_no_common, 2000, 2002)
+    with pytest.raises(
+            ValueError,
+            match="No common years found between the datasets."):
+        filter_years(
+            MOCK_BASICS_DF, mock_population_df_no_common,
+            mock_gdp_df_no_common, 2000, 2002)
 
 
 def test_filter_years_within_range():
+    """Test filtering the dataframes within a provided range."""
     filtered_basics, filtered_population, filtered_gdp = filter_years(
         MOCK_BASICS_DF, MOCK_POPULATION_DF, MOCK_GDP_DF, 2001, 2001
     )
@@ -171,6 +188,7 @@ def test_filter_years_within_range():
 
 
 def test_filter_years_missing_years():
+    """Test filtering the dataframes with missing years."""
     mock_basics_df_missing_years = pd.DataFrame({
         'tconst': ['tt0000001', 'tt0000002', 'tt0000003'],
         'titleType': ['movie', 'movie', 'movie'],
