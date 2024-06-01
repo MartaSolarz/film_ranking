@@ -3,9 +3,23 @@ import argparse
 import cProfile
 import pstats
 import logging
+import os
 
 import data_analysis.data_processing as dp
-from data_analysis.analysis import perform_task_1
+from data_analysis.analysis import perform_task_1, perform_task_2
+
+
+def setup_logging():
+    """
+    Setup the logging configuration.
+
+    :param: None    :return: None
+    """
+    if not os.path.exists('logs'):
+        os.makedirs('logs')
+    logging.basicConfig(filename='logs/app.log', filemode='a',
+                        format='%(asctime)s - %(levelname)s - %(message)s',
+                        level=logging.INFO)
 
 
 def save_profile(profiler: cProfile.Profile, output_file='profile_results.txt'):
@@ -30,28 +44,50 @@ def main(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace: Arguments from the command line
     :return: None
     """
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s: %(message)s')
+    setup_logging()
     logging.info("Starting the data analysis app with profiler...")
 
     profiler = cProfile.Profile()
     profiler.enable()
 
-    logging.info("Loading data...")
-    basics = dp.load_data(args.basics_title_data)
-    ratings = dp.load_data(args.rating_title_data)
-    akas = dp.load_data(args.akas_title_data)
-    countries = dp.load_data(args.countries_name_data)
-    population = dp.load_data(args.population_data)
-    gdp = dp.load_data(args.gdp_data)
+    try:
+        logging.info("Loading data...")
+        basics = dp.load_data(args.basics_title_data)
+        ratings = dp.load_data(args.rating_title_data)
+        akas = dp.load_data(args.akas_title_data)
+        countries = dp.load_data(args.countries_name_data)
+        population = dp.load_data(args.population_data)
+        gdp = dp.load_data(args.gdp_data)
+    except FileNotFoundError as file_err:
+        logging.error("File not found: %s", str(file_err))
+        return
+    except ValueError as val_err:
+        logging.error("Invalid file format: %s", str(val_err))
+        return
+    except Exception as exc_err:
+        logging.error("An error occurred during data loading: %s", str(exc_err))
+        return
 
-    logging.info("Processing data...")
-    merged_data = dp.process_data_and_merge(
-        basics, ratings, akas, countries, population, gdp,
-        args.start, args.end,
-    )
+    try:
+        logging.info("Processing data...")
+        merged_data = dp.process_data_and_merge(
+            basics, ratings, akas, countries, population, gdp,
+            args.start, args.end,
+        )
+    except Exception as exc_err:
+        logging.error("An error occurred during data processing: %s", str(exc_err))
+        return
 
-    logging.info("Performing analysis...")
-    perform_task_1(merged_data)
+    try:
+        logging.info("Performing analysis...")
+        perform_task_1(merged_data)
+        perform_task_2(merged_data)
+    except KeyError as key_err:
+        logging.error("Key error: %s", str(key_err))
+        return
+    except Exception as exc_err:
+        logging.error("An error occurred during data analysis: %s", str(exc_err))
+        return
 
     profiler.disable()
 
@@ -80,11 +116,5 @@ if __name__ == '__main__':
 
     try:
         main(parser.parse_args())
-    except ValueError as e:
-        print(e)
-    except FileNotFoundError as e:
-        print(f"File not found: {e.filename}")
-    except KeyError as e:
-        print(f"Column not found: {e}")
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logging.critical("An unexpected error occurred: %s", str(e))

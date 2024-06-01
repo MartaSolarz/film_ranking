@@ -1,5 +1,6 @@
 """Load and basic processing of the data."""
 from typing import Tuple
+import logging
 
 import numpy as np
 import pandas as pd
@@ -20,7 +21,15 @@ def load_data(file_path: str) -> pd.DataFrame:
     else:
         raise ValueError("Invalid file format. Only CSV and TSV files are supported.")
 
-    data = pd.read_csv(file_path, low_memory=False, na_values=[np.NAN, '\\N', '..'], sep=sep)
+    try:
+        data = pd.read_csv(file_path, low_memory=False, na_values=[np.NAN, '\\N', '..'], sep=sep)
+    except Exception as e:
+        logging.error("Error loading data from %s: %s", file_path, str(e))
+        raise
+
+    if data.empty:
+        logging.warning("The file %s is empty.", file_path)
+        raise ValueError("The file is empty.")
 
     return data
 
@@ -55,21 +64,44 @@ def process_data_and_merge(
 
     :return: pd.DataFrame: Filtered and merged data
     """
-    basics_df = basics_df[['tconst', 'titleType', 'primaryTitle', 'startYear']]
-    ratings_df = ratings_df[['tconst', 'averageRating', 'numVotes']]
-    akas_df = akas_df[['titleId', 'region']]
-    akas_df = akas_df.dropna(subset=['region'])
-    countries_df = countries_df[['alpha-2', 'alpha-3', 'name']]
+    try:
+        basics_df = basics_df[['tconst', 'titleType', 'primaryTitle', 'startYear']]
+        ratings_df = ratings_df[['tconst', 'averageRating', 'numVotes']]
+        akas_df = akas_df[['titleId', 'region']]
+        akas_df = akas_df.dropna(subset=['region'])
+        countries_df = countries_df[['alpha-2', 'alpha-3', 'name']]
+    except KeyError as e:
+        logging.error("Error selecting columns from the dataframes: %s", str(e))
+        raise
 
-    population_df = process_world_bank_data(population_df, 'Population')
-    gdp_df = process_world_bank_data(gdp_df, 'GDP')
+    try:
+        population_df = process_world_bank_data(population_df, 'Population')
+        gdp_df = process_world_bank_data(gdp_df, 'GDP')
+    except Exception as e:
+        logging.error("Error processing World Bank data: %s", str(e))
+        raise
 
-    basics_df, population_df, gdp_df = filter_years(basics_df, population_df, gdp_df, start, end)
+    try:
+        basics_df, population_df, gdp_df = filter_years(
+            basics_df, population_df, gdp_df, start, end,
+        )
+    except ValueError as e:
+        logging.error("Error filtering the dataframes: %s", str(e))
+        raise
 
-    merged_df = merge_data(
-        basics_df, ratings_df, akas_df, countries_df, population_df, gdp_df,
-    )
-    merged_df = clean(merged_df)
+    try:
+        merged_df = merge_data(
+            basics_df, ratings_df, akas_df, countries_df, population_df, gdp_df,
+        )
+    except Exception as e:
+        logging.error("Error merging the dataframes: %s", str(e))
+        raise
+
+    try:
+        merged_df = clean(merged_df)
+    except Exception as e:
+        logging.error("Error cleaning the data: %s", str(e))
+        raise
 
     return merged_df
 
@@ -178,12 +210,14 @@ def clean(merged_df: pd.DataFrame) -> pd.DataFrame:
         columns=['tconst', 'titleType', 'startYear', 'alpha-2', 'alpha-3',
                  'Country Code_x', 'Country Code_y', 'Year_y'],
     )
-    merged_df.columns = ['titleId', 'region', 'title', 'averageRating', 'numVotes',
-                         'countryName', 'year', 'population', 'gdp']
+    merged_df.columns = ['title_id', 'country_code', 'title', 'average_rating', 'num_of_votes',
+                         'country_name', 'year', 'population', 'gdp']
     merged_df = merged_df.drop_duplicates(
-        subset=['region', 'titleId', 'year', 'averageRating', 'numVotes', 'population', 'gdp'],
+        subset=['country_code', 'title_id', 'year', 'average_rating',
+                'num_of_votes', 'population', 'gdp'],
         keep='first',
     )
-    merged_df.set_index('titleId', inplace=True)
+    merged_df['gdp_per_population'] = merged_df['gdp'] / merged_df['population']
+    merged_df.set_index('title_id', inplace=True)
 
     return merged_df
