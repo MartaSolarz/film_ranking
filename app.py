@@ -3,23 +3,9 @@ import argparse
 import cProfile
 import pstats
 import logging
-import os
 
 import data_analysis.data_processing as dp
-from data_analysis.analysis import perform_task_1, perform_task_2
-
-
-def setup_logging():
-    """
-    Setup the logging configuration.
-
-    :param: None    :return: None
-    """
-    if not os.path.exists('logs'):
-        os.makedirs('logs')
-    logging.basicConfig(filename='logs/app.log', filemode='a',
-                        format='%(asctime)s - %(levelname)s - %(message)s',
-                        level=logging.INFO)
+from data_analysis.analysis import perform_task_1, perform_task_2, perform_task_3
 
 
 def save_profile(profiler: cProfile.Profile, output_file='profile_results.txt'):
@@ -44,7 +30,7 @@ def main(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace: Arguments from the command line
     :return: None
     """
-    setup_logging()
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s: %(message)s')
     logging.info("Starting the data analysis app with profiler...")
 
     profiler = cProfile.Profile()
@@ -55,6 +41,8 @@ def main(args: argparse.Namespace) -> None:
         basics = dp.load_data(args.basics_title_data)
         ratings = dp.load_data(args.rating_title_data)
         akas = dp.load_data(args.akas_title_data)
+        crew = dp.load_data(args.crew_title_data)
+        name = dp.load_data(args.name_people_data)
         countries = dp.load_data(args.countries_name_data)
         population = dp.load_data(args.population_data)
         gdp = dp.load_data(args.gdp_data)
@@ -71,8 +59,8 @@ def main(args: argparse.Namespace) -> None:
     try:
         logging.info("Processing data...")
         merged_data = dp.process_data_and_merge(
-            basics, ratings, akas, countries, population, gdp,
-            args.start, args.end,
+            basics, ratings, akas, crew, name,
+            countries, population, gdp, args.start, args.end,
         )
     except Exception as exc_err:
         logging.error("An error occurred during data processing: %s", str(exc_err))
@@ -82,6 +70,7 @@ def main(args: argparse.Namespace) -> None:
         logging.info("Performing analysis...")
         perform_task_1(merged_data)
         perform_task_2(merged_data)
+        perform_task_3(merged_data)
     except KeyError as key_err:
         logging.error("Key error: %s", str(key_err))
         return
@@ -105,6 +94,10 @@ if __name__ == '__main__':
                         help='Path to the ranking title data in CSV or TSV file')
     parser.add_argument('akas_title_data',
                         help='Path to the title akas data in CSV or TSV file')
+    parser.add_argument('crew_title_data',
+                        help='Path to the crew title data in CSV or TSV file')
+    parser.add_argument('name_people_data',
+                        help='Path to the name people data in CSV or TSV file')
     parser.add_argument('countries_name_data',
                         help='Path to the countries name data in CSV or TSV file')
     parser.add_argument('population_data',

@@ -38,6 +38,8 @@ def process_data_and_merge(
         basics_df: pd.DataFrame,
         ratings_df: pd.DataFrame,
         akas_df: pd.DataFrame,
+        crew_df: pd.DataFrame,
+        name_df: pd.DataFrame,
         countries_df: pd.DataFrame,
         population_df: pd.DataFrame,
         gdp_df: pd.DataFrame,
@@ -53,6 +55,10 @@ def process_data_and_merge(
         Data with ratings of the movies
     :param akas_df: pd.DataFrame:
         Data with information about the different regions where the movies were presented
+    :param crew_df: pd.DataFrame:
+        Data with information about the crew of the movies
+    :param name_df: pd.DataFrame:
+        Data with information about the names of the people
     :param countries_df: pd.DataFrame:
         Data with information about the names of the countries based on the region codes
     :param population_df: pd.DataFrame:
@@ -69,6 +75,8 @@ def process_data_and_merge(
         ratings_df = ratings_df[['tconst', 'averageRating', 'numVotes']]
         akas_df = akas_df[['titleId', 'region']]
         akas_df = akas_df.dropna(subset=['region'])
+        crew_df = crew_df.drop(columns=['writers'])
+        name_df = name_df[['nconst', 'primaryName']]
         countries_df = countries_df[['alpha-2', 'alpha-3', 'name']]
     except KeyError as e:
         logging.error("Error selecting columns from the dataframes: %s", str(e))
@@ -91,7 +99,8 @@ def process_data_and_merge(
 
     try:
         merged_df = merge_data(
-            basics_df, ratings_df, akas_df, countries_df, population_df, gdp_df,
+            basics_df, ratings_df, akas_df, crew_df,
+            name_df, countries_df, population_df, gdp_df,
         )
     except Exception as e:
         logging.error("Error merging the dataframes: %s", str(e))
@@ -164,6 +173,8 @@ def merge_data(
         basics_df: pd.DataFrame,
         ratings_df: pd.DataFrame,
         akas_df: pd.DataFrame,
+        crew_df: pd.DataFrame,
+        name_df: pd.DataFrame,
         countries_df: pd.DataFrame,
         population_df: pd.DataFrame,
         gdp_df: pd.DataFrame,
@@ -177,6 +188,10 @@ def merge_data(
         Data with ratings of the movies
     :param akas_df: pd.DataFrame:
         Data with information about the different regions where the movies were presented
+    :param crew_df: pd.DataFrame:
+        Data with information about the crew of the movies
+    :param name_df: pd.DataFrame:
+        Data with information about the names of the people
     :param countries_df: pd.DataFrame:
         Data with information about the names of the countries based on the region codes
     :param population_df: pd.DataFrame:
@@ -188,6 +203,8 @@ def merge_data(
     """
     merged_df = akas_df.merge(basics_df, left_on='titleId', right_on='tconst')
     merged_df = merged_df.merge(ratings_df, on='tconst')
+    merged_df = merged_df.merge(crew_df, on='tconst')
+    merged_df = merged_df.merge(name_df, left_on='directors', right_on='nconst')
     merged_df = merged_df.merge(countries_df, left_on='region', right_on='alpha-2')
     merged_df = merged_df.merge(population_df, left_on=['alpha-3', 'startYear'],
                                 right_on=['Country Code', 'Year'])
@@ -208,15 +225,16 @@ def clean(merged_df: pd.DataFrame) -> pd.DataFrame:
     merged_df = merged_df[merged_df['titleType'] == 'movie']
     merged_df = merged_df.drop(
         columns=['tconst', 'titleType', 'startYear', 'alpha-2', 'alpha-3',
-                 'Country Code_x', 'Country Code_y', 'Year_y'],
+                 'Country Code_x', 'Country Code_y', 'Year_y', 'nconst'],
     )
     merged_df.rename(columns={'titleId': 'title_id', 'region': 'country_code',
                               'Year_x': 'year', 'primaryTitle': 'title', 'name': 'country_name',
                               'averageRating': 'average_rating', 'numVotes': 'num_of_votes',
+                              'primaryName': 'director_name', 'directors': 'director_id',
                               'Population': 'population', 'GDP': 'gdp'}, inplace=True)
     merged_df = merged_df.drop_duplicates(
-        subset=['country_code', 'title_id', 'year', 'average_rating',
-                'num_of_votes', 'population', 'gdp'],
+        subset=['country_code', 'title_id', 'year', 'average_rating', 'num_of_votes',
+                'director_id', 'director_name', 'population', 'gdp'],
         keep='first',
     )
     merged_df['gdp_per_population'] = merged_df['gdp'] / merged_df['population']

@@ -1,10 +1,10 @@
-""""Setup script for the cinematic_impact_analysis package."""
+"""Setup script for the cinematic_impact_analysis package."""
 from setuptools import setup, find_packages
 
 
 def parse_requirements(filename: str) -> list:
     """
-    Parse the requirements file and return a list of requirements.
+    Parse the requirement file and return a list of requirements.
 
     :param filename: str: Path to the requirements file
     :return: list: List of requirements

@@ -1,6 +1,6 @@
 pip~=24.0
-pytz~=2024.1
-numpy~=1.24.4
+pytz==2024.1
+numpy==1.24.4
 setuptools~=70.0.0
 pandas~=2.0.3
 python-dateutil~=2.9.0.post0

@@ -2,27 +2,29 @@
 import pandas as pd
 
 PATH_TO_SAVE_RESULTS = "./results"
+MARGIN = 100
+NUM_OF_FILMS_TO_PROCESS = (10, 20, 50, 100, 200)
 
 
-def perform_task_1(merged_df: pd.DataFrame, numbers=(10, 20, 50, 100, 200)) -> None:
+def perform_task_1(merged_df: pd.DataFrame) -> None:
     """
     Perform the task 1 analysis.
 
     :param merged_df: pd.DataFrame: Merged dataframe with the movie data
-    :param numbers: tuple: Tuple with the numbers of top movies to consider
+
     :return: None
     """
     start_year = merged_df['year'].min()
     end_year = merged_df['year'].max()
 
     print('----- Results for Task 1: -----')
-    for n in numbers:
+    for n in NUM_OF_FILMS_TO_PROCESS:
         top_n_ratings_df = get_top_n_movies_per_country(merged_df, n)
         top_n_ratings_df = top_n_ratings_df.sort_values(by='avg_rating', ascending=False)
         top_n_ratings_df.to_csv(
-            f'{PATH_TO_SAVE_RESULTS}/top_{n}_ratings_{start_year}_{end_year}.csv',
+            f'{PATH_TO_SAVE_RESULTS}/1_top_{n}_ratings_{start_year}_{end_year}.csv',
             index=False)
-        print('-' * 50)
+        print('-' * MARGIN)
         print(f"Top 10 countries based on top {n} films: ")
         print(top_n_ratings_df.head(10))
 
@@ -32,14 +34,14 @@ def perform_task_1(merged_df: pd.DataFrame, numbers=(10, 20, 50, 100, 200)) -> N
 def get_top_n_movies_per_country(movies_df: pd.DataFrame, n: int) -> pd.DataFrame:
     """
     Get the average rating of the top n movies per country.
-    In case of same rating, the number of votes is used as a tiebreaker.
+    In the case of the same rating, the number of votes is used as a tiebreaker.
     The process takes into account only countries with at least n movies
-    (in order to have comparable and fair rankings)
+    (to have comparable and fair rankings)
 
-    :param movies_df: pd.DataFrame: Dataframe with the movies data
+    :param movies_df: Pd.DataFrame: Dataframe with the movies data
     :param n: int: Number of top movies to choose per country
 
-    :return: pd.DataFrame: Dataframe with the average rating of the top n movies per country
+    :return: Pd.DataFrame: Dataframe with the average rating of the top n movies per country
     """
     country_movie_counts = movies_df['country_code'].value_counts()
     countries_with_at_least_n_films = country_movie_counts[country_movie_counts >= n].index
@@ -78,13 +80,13 @@ def perform_task_2(merged_df: pd.DataFrame) -> None:
     # Compute hegemony for population
     hegemony_pop_df = compute_hegemony(rank_df, 'population', 'pop_rank')
     hegemony_pop_df.to_csv(
-        f'{PATH_TO_SAVE_RESULTS}/hegemony_pop_result_{start_year}_{end_year}.csv',
+        f'{PATH_TO_SAVE_RESULTS}/2_hegemony_pop_result_{start_year}_{end_year}.csv',
         index=False)
 
     # Compute hegemony for GDP
     hegemony_gdp_df = compute_hegemony(rank_df, 'gdp', 'gdp_rank')
     hegemony_gdp_df.to_csv(
-        f'{PATH_TO_SAVE_RESULTS}/hegemony_gdp_result_{start_year}_{end_year}.csv',
+        f'{PATH_TO_SAVE_RESULTS}/2_hegemony_gdp_result_{start_year}_{end_year}.csv',
         index=False)
 
     # Compute hegemony for GDP per population
@@ -92,7 +94,7 @@ def perform_task_2(merged_df: pd.DataFrame) -> None:
         rank_df, 'gdp_per_population', 'gdp_per_population_rank',
     )
     hegemony_gdp_per_pop_df.to_csv(
-        f'{PATH_TO_SAVE_RESULTS}/hegemony_gdp_per_pop_result_{start_year}_{end_year}.csv',
+        f'{PATH_TO_SAVE_RESULTS}/2_hegemony_gdp_per_pop_result_{start_year}_{end_year}.csv',
         index=False)
 
     hegemony_pop_weak_df = (hegemony_pop_df[['Country Name', 'Weak Hegemony Indicator',
@@ -103,39 +105,39 @@ def perform_task_2(merged_df: pd.DataFrame) -> None:
                               sort_values(by='Strong Hegemony Indicator', ascending=False))
 
     hegemony_gdp_weak_df = (hegemony_gdp_df[['Country Name', 'Weak Hegemony Indicator',
-                                             'Country GDP Rank', 'Weak Impact Rank']].
+                                             'Country Gdp Rank', 'Weak Impact Rank']].
                             sort_values(by='Weak Hegemony Indicator', ascending=False))
     hegemony_gdp_strong_df = (hegemony_gdp_df[['Country Name', 'Strong Hegemony Indicator',
-                                               'Country GDP Rank', 'Strong Impact Rank']].
+                                               'Country Gdp Rank', 'Strong Impact Rank']].
                               sort_values(by='Strong Hegemony Indicator', ascending=False))
 
     hegemony_gdp_per_pop_weak_df = (hegemony_gdp_per_pop_df[
                                         ['Country Name', 'Weak Hegemony Indicator',
-                                         'Country GDP per Population Rank', 'Weak Impact Rank']].
+                                         'Country GdpPerPopulation Rank', 'Weak Impact Rank']].
                                     sort_values(by='Weak Hegemony Indicator', ascending=False))
     hegemony_gdp_per_pop_strong_df = (hegemony_gdp_per_pop_df[
                                           ['Country Name', 'Strong Hegemony Indicator',
-                                           'Country GDP per Population Rank',
+                                           'Country GdpPerPopulation Rank',
                                            'Strong Impact Rank']].
                                       sort_values(by='Strong Hegemony Indicator', ascending=False))
 
     print('----- Results for Task 2: -----')
-    print('-' * 50)
+    print('-' * MARGIN)
     print('Top 10 countries with the highest weak population hegemony:')
     print(hegemony_pop_weak_df.head(10))
-    print('-' * 50)
+    print('-' * MARGIN)
     print('Top 10 countries with the highest strong population hegemony:')
     print(hegemony_pop_strong_df.head(10))
-    print('-' * 50)
+    print('-' * MARGIN)
     print('Top 10 countries with the highest weak GDP hegemony:')
     print(hegemony_gdp_weak_df.head(10))
-    print('-' * 50)
+    print('-' * MARGIN)
     print('Top 10 countries with the highest strong GDP hegemony:')
     print(hegemony_gdp_strong_df.head(10))
-    print('-' * 50)
+    print('-' * MARGIN)
     print('Top 10 countries with the highest weak GDP per population hegemony:')
     print(hegemony_gdp_per_pop_weak_df.head(10))
-    print('-' * 50)
+    print('-' * MARGIN)
     print('Top 10 countries with the highest strong GDP per population hegemony:')
     print(hegemony_gdp_per_pop_strong_df.head(10))
 
@@ -199,9 +201,101 @@ def compute_hegemony(rank_df: pd.DataFrame, rank_type: str, rank_column: str) ->
     df[f'weak_{rank_type}_hegemony'] = df[rank_column] - df['weak_impact_rank']
     df[f'strong_{rank_type}_hegemony'] = df[rank_column] - df['strong_impact_rank']
 
-    df.columns = ['Country Name', f'Country {rank_type.capitalize()} Rank',
+    df.columns = ['Country Name',
+                  f'Country {"".join(x.capitalize() for x in rank_type.split("_"))} Rank',
                   'Weak Impact Rank', 'Strong Impact Rank',
-                  f'Weak {rank_type.capitalize()} Hegemony Indicator',
-                  f'Strong {rank_type.capitalize()} Hegemony Indicator']
+                  'Weak Hegemony Indicator', 'Strong Hegemony Indicator']
 
     return df
+
+
+def perform_task_3(merged_df: pd.DataFrame) -> None:
+    """
+    Perform the task 3 analysis.
+
+    :param merged_df: pd.DataFrame: Merged dataframe with the movie data
+
+    :return: None
+    """
+    merged_df.dropna(subset=['director_name', 'director_id'], inplace=True)
+
+    film_counts = merged_df['director_id'].value_counts()
+
+    start_year = merged_df['year'].min()
+    end_year = merged_df['year'].max()
+
+    print('----- Results for Task 3: -----')
+    for n in NUM_OF_FILMS_TO_PROCESS:
+        eligible_directors = film_counts[film_counts >= n].index
+        if not eligible_directors.any():
+            print(f"No directors with at least {n} films found in specified time range.")
+            continue
+
+        career_progression = calculate_career_progression(merged_df, n, eligible_directors)
+
+        res_rating = career_progression[
+            ['directors', 'first_avg_rating', 'last_avg_rating', 'rating_diff']
+        ].sort_values(
+            by='rating_diff', ascending=False)
+        res_rating.columns = ['Director', 'First Average Rating',
+                              'Last Average Rating', 'Career Progression Rating']
+        res_rating.to_csv(
+            f'{PATH_TO_SAVE_RESULTS}/3_rating_diff_{n}_{start_year}_{end_year}.csv', index=False,
+        )
+
+        res_votes = career_progression[
+            ['directors', 'first_num_of_votes', 'last_num_of_votes', 'votes_diff']
+        ].sort_values(
+            by='votes_diff', ascending=False)
+        res_votes.columns = ['Director', 'First Number of Votes',
+                             'Last Number of Votes', 'Career Progression Number of Votes']
+        res_votes.to_csv(
+            f'{PATH_TO_SAVE_RESULTS}/3_votes_diff_{n}_{start_year}_{end_year}.csv', index=False,
+        )
+
+        print('-' * MARGIN)
+        print(f"Top 10 directors based on rating difference for {n} film adaptations: ")
+        print(res_rating.head(10))
+
+        print(f"Top 10 directors based on votes difference for {n} film adaptations: ")
+        print(res_votes.head(10))
+
+    print('\nThe full results are saved in the results folder.')
+
+
+def calculate_career_progression(
+        merged_df: pd.DataFrame, n: int, eligible_directors: pd.Series,
+) -> pd.DataFrame:
+    """
+    Calculate the career progression of the directors
+    based on the average rating and the number of votes.
+
+    :param merged_df: pd.DataFrame: Merged data
+    :param n: int: Number of films to consider
+    :param eligible_directors: pd.Series: Series with the eligible directors
+
+    :return: pd.DataFrame: Dataframe with the career progression of the directors
+    """
+    director_films = merged_df[merged_df['director_id'].isin(eligible_directors)]
+    director_films = director_films.sort_values(by=['director_id', 'year'])
+
+    first_films = director_films.groupby('director_id').head(n / 2)
+    last_films = director_films.groupby('director_id').tail(n / 2)
+
+    first_stats = first_films.groupby('director_name').agg({
+        'average_rating': 'mean',
+        'num_of_votes': 'sum'
+    }).reset_index()
+    first_stats.columns = ['directors', 'first_avg_rating', 'first_num_of_votes']
+
+    last_stats = last_films.groupby('director_name').agg({
+        'average_rating': 'mean',
+        'num_of_votes': 'sum'
+    }).reset_index()
+    last_stats.columns = ['directors', 'last_avg_rating', 'last_num_of_votes']
+
+    progression = first_stats.merge(last_stats, on='directors')
+    progression['rating_diff'] = progression['last_avg_rating'] - progression['first_avg_rating']
+    progression['votes_diff'] = progression['last_num_of_votes'] - progression['first_num_of_votes']
+
+    return progression
