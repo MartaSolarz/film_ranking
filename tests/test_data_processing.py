@@ -283,6 +283,24 @@ def akas_df():
 
 
 @pytest.fixture
+def crew_df():
+    """Fixture for the crew dataframe."""
+    return pd.DataFrame({
+        'tconst': ['tt0000001', 'tt0000002', 'tt0000003'],
+        'directors': ['nm0000001', 'nm0000002', 'nm0000003']
+    })
+
+
+@pytest.fixture
+def name_df():
+    """Fixture for the name dataframe."""
+    return pd.DataFrame({
+        'nconst': ['nm0000001', 'nm0000002', 'nm0000003'],
+        'primaryName': ['Director1', 'Director2', 'Director3']
+    })
+
+
+@pytest.fixture
 def countries_df():
     """Fixture for the countries dataframe."""
     return pd.DataFrame({
@@ -313,10 +331,13 @@ def gdp_df():
 
 
 def test_merge_data_happy_path(
-        basics_df, ratings_df, akas_df, countries_df, population_df, gdp_df,
+        basics_df, ratings_df, akas_df, crew_df, name_df,
+        countries_df, population_df, gdp_df,
 ):
     """Test merging dataframes - happy path."""
-    merged_df = dp.merge_data(basics_df, ratings_df, akas_df, countries_df, population_df, gdp_df)
+    merged_df = dp.merge_data(
+        basics_df, ratings_df, akas_df, crew_df, name_df, countries_df, population_df, gdp_df
+    )
 
     expected_df = pd.DataFrame({
         'titleId': ['tt0000001', 'tt0000002', 'tt0000003'],
@@ -327,6 +348,9 @@ def test_merge_data_happy_path(
         'startYear': [2000, 2001, 2002],
         'averageRating': [7.5, 8.0, 6.5],
         'numVotes': [1500, 3000, 2500],
+        'directors': ['nm0000001', 'nm0000002', 'nm0000003'],
+        'nconst': ['nm0000001', 'nm0000002', 'nm0000003'],
+        'primaryName': ['Director1', 'Director2', 'Director3'],
         'alpha-2': ['US', 'GB', 'FR'],
         'alpha-3': ['USA', 'GBR', 'FRA'],
         'name': ['United States', 'United Kingdom', 'France'],
@@ -342,25 +366,29 @@ def test_merge_data_happy_path(
 
 
 def test_merge_data_missing_column(
-        basics_df, ratings_df, akas_df, countries_df, population_df, gdp_df,
+        basics_df, ratings_df, akas_df, crew_df, name_df,
+        countries_df, population_df, gdp_df,
 ):
     """Test merging dataframes with a missing column."""
     incomplete_akas_df = akas_df.drop(columns=['region'])
 
     with pytest.raises(KeyError):
         dp.merge_data(
-            basics_df, ratings_df, incomplete_akas_df, countries_df, population_df, gdp_df,
+            basics_df, ratings_df, incomplete_akas_df, crew_df, name_df,
+            countries_df, population_df, gdp_df,
         )
 
 
 def test_merge_data_missing_data(
-        basics_df, ratings_df, akas_df, countries_df, population_df, gdp_df,
+        basics_df, ratings_df, akas_df, crew_df, name_df,
+        countries_df, population_df, gdp_df,
 ):
     """Test merging dataframes with missing data."""
     incomplete_population_df = population_df.drop(population_df.index[1])
 
     merged_df = dp.merge_data(
-        basics_df, ratings_df, akas_df, countries_df, incomplete_population_df, gdp_df,
+        basics_df, ratings_df, akas_df, crew_df, name_df,
+        countries_df, incomplete_population_df, gdp_df,
     )
 
     expected_df = pd.DataFrame({
@@ -372,6 +400,9 @@ def test_merge_data_missing_data(
         'startYear': [2000, 2002],
         'averageRating': [7.5, 6.5],
         'numVotes': [1500, 2500],
+        'directors': ['nm0000001', 'nm0000003'],
+        'nconst': ['nm0000001', 'nm0000003'],
+        'primaryName': ['Director1', 'Director3'],
         'alpha-2': ['US', 'FR'],
         'alpha-3': ['USA', 'FRA'],
         'name': ['United States', 'France'],
@@ -387,13 +418,15 @@ def test_merge_data_missing_data(
 
 
 def test_merge_data_type_mismatch(
-        basics_df, ratings_df, akas_df, countries_df, population_df, gdp_df,
+        basics_df, ratings_df, akas_df, crew_df, name_df,
+        countries_df, population_df, gdp_df,
 ):
     """Test merging dataframes with type mismatch."""
     basics_df['startYear'] = basics_df['startYear'].astype(str)  # Introduce a type mismatch
 
     with pytest.raises(ValueError):
-        dp.merge_data(basics_df, ratings_df, akas_df, countries_df, population_df, gdp_df)
+        dp.merge_data(basics_df, ratings_df, akas_df, crew_df, name_df,
+                      countries_df, population_df, gdp_df)
 
 
 # Test clean function
@@ -408,6 +441,9 @@ def merged_df_fixture():
         'startYear': [2000, 2001, 2002, 2003],
         'averageRating': [7.5, 8.0, 6.5, 9.0],
         'numVotes': [1500, 3000, 2500, 4000],
+        'directors': ['nm0000001', 'nm0000002', 'nm0000003', 'nm0000004'],
+        'nconst': ['nm0000001', 'nm0000002', 'nm0000003', 'nm0000004'],
+        'primaryName': ['Director1', 'Director2', 'Director3', 'Director4'],
         'alpha-2': ['US', 'GB', 'FR', 'DE'],
         'alpha-3': ['USA', 'GBR', 'FRA', 'DEU'],
         'region': ['US', 'GB', 'FR', 'DE'],
@@ -430,6 +466,8 @@ def test_clean_happy_path(merged_df_fixture):
         'title': ['Title1', 'Title2', 'Title4'],
         'average_rating': [7.5, 8.0, 9.0],
         'num_of_votes': [1500, 3000, 4000],
+        'director_id': ['nm0000001', 'nm0000002', 'nm0000004'],
+        'director_name': ['Director1', 'Director2', 'Director4'],
         'country_code': ['US', 'GB', 'DE'],
         'country_name': ['United States', 'United Kingdom', 'Germany'],
         'year': [2000, 2001, 2003],
@@ -458,6 +496,8 @@ def test_clean_with_duplicates(merged_df_fixture):
         'title': ['Title1', 'Title2', 'Title4'],
         'average_rating': [7.5, 8.0, 9.0],
         'num_of_votes': [1500, 3000, 4000],
+        'director_id': ['nm0000001', 'nm0000002', 'nm0000004'],
+        'director_name': ['Director1', 'Director2', 'Director4'],
         'country_code': ['US', 'GB', 'DE'],
         'country_name': ['United States', 'United Kingdom', 'Germany'],
         'year': [2000, 2001, 2003],
