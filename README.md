@@ -11,10 +11,17 @@
     1.2. [Country Hegemony Analysis Based on Economic and Demographic Metrics](#12-country-hegemony-analysis-based-on-economic-and-demographic-metrics)
 
     1.3. [Director Career Progression Analysis Based on Film Ratings and Votes](#13-director-career-progression-analysis-based-on-film-ratings-and-votes)
-2. [How to run the program?](#2-how-to-run-the-program)
-3. [How to run the tests?](#3-how-to-run-the-tests)
-4. [Profiling](#4-profiling)
-5. [How to import the package?](#5-how-to-import-the-package)
+2. [Observations and conclusions for performed analyses](#2-observations-and-conclusions-for-performed-analyses)
+
+    2.1. [Top Movies Country Rating Analysis](#21-top-movies-country-rating-analysis)
+
+    2.2. [Country Hegemony Analysis Based on Economic and Demographic Metrics](#22-country-hegemony-analysis-based-on-economic-and-demographic-metrics)
+
+    2.3. [Director Career Progression Analysis Based on Film Ratings and Votes](#23-director-career-progression-analysis-based-on-film-ratings-and-votes)
+2. [How to run the program?](#3-how-to-run-the-program)
+3. [How to run the tests?](#4-how-to-run-the-tests)
+4. [Profiling](#5-profiling)
+5. [How to import the package?](#6-how-to-import-the-package)
 
 ![img](img.webp)
 *Source: DALL-E, OpenAI*
@@ -80,10 +87,27 @@ The final output consists of CSV files named according to the number of films co
 
 For each set, the top 10 directors with the highest rating or votes difference are printed.
 
-## 2. How to run the program?
+## 2. Observations and conclusions from the analyses performed
+
+### 2.1. Top Movies Country Rating Analysis
+
+- The analysis of top movies by country rating shows that the United States consistently ranks high across different sets of top movies.
+- We could also observe that for every set of number of top movies, the same countries are present in the top 10, sometimes only in different order.
+
+### 2.2. Country Hegemony Analysis Based on Economic and Demographic Metrics
+
+- High values of strong hegemony are often given to countries with low values of economic and demographic indicators, which is caused by high ratings of films in these countries.
+- It can therefore be concluded that small and poor countries (in terms of all analyzed metrics) usually rate the films they watch highly, which proves that the results should be divided into groups of countries that are similar in terms of economics and demographics.
+
+### 2.3. Director Career Progression Analysis Based on Film Ratings and Votes
+
+- The more films of directors are taken into account when calculating the difference in ratings and the number of votes, the smaller the differences between the first and last films are visible (directors with the greatest progress record smaller differences in quality/number of votes than when few films are taken into account).
+- Directors who have directed the most films (and therefore are the best) record less progress over the course of their careers than directors who have directed few films (the first ones were poorly rated and the last ones much better).
+
+## 3. How to run the program?
 
 ```bash
-    python app.py [-h] [-start START_YEAR] [-end END_YEAR] basics_title_data rating_title_data akas_title_data crew_title_data name_people_data countries_name_data population_data gdp_data
+    python main.py [-h] [-start START_YEAR] [-end END_YEAR] basics_title_data rating_title_data akas_title_data crew_title_data name_people_data countries_name_data population_data gdp_data
 ```
 
 **Arguments:**
@@ -106,13 +130,13 @@ For each set, the top 10 directors with the highest rating or votes difference a
     python app.py -start 1990 -end 2020 ./data/title.basics.tsv ./data/title.ratings.tsv ./data/title.akas.tsv ./data/title.crew.tsv ./data/name.basics.tsv ./data/countries.csv ./data/population.csv ./data/gdp.csv 
 ```
 
-## 3. How to run the tests?
+## 4. How to run the tests?
 
 ```bash
     python -m pytest
 ```
 
-## 4. Profiling
+## 5. Profiling
 
 The program is profiled using the `cProfile` module. 
 The results are saved in the `profile_results.txt` file.
@@ -123,7 +147,7 @@ The results are saved in the `profile_results.txt` file.
 - Pandas' merge function is quite expensive, it may be important to ensure data is properly sorted and indexed before linking to improve performance. It may also be beneficial to combine categorical data instead of strings to speed up the process.
 - It may also be beneficial to use int32 instead of int64 for columns with integer data to reduce memory usage.
 
-## 5. How to import the package?
+## 6. How to import the package?
 
 ```bash
     import film_ranking

@@ -1,11 +1,10 @@
-"""Tests for the analysis module."""
+"""Tests for the data_analysis.analysis file."""
 import pytest
 import pandas as pd
 import data_analysis.analysis as a
 
 
 # Test the get_top_n_movies_per_country function
-
 @pytest.fixture
 def movies_data():
     """Create a DataFrame with basic data about movies."""
@@ -116,7 +115,6 @@ def test_get_top_n_movies_per_country_no_valid_country(movies_data):
 
 
 # Test the calculate_impact_metrics function
-
 @pytest.fixture
 def merged_data():
     """Create a DataFrame with merged data."""
@@ -221,7 +219,6 @@ def test_calculate_impact_metrics_multiple_countries_same_name():
 
 
 # Test the create_rank_dataframe function
-
 @pytest.fixture
 def impact_data():
     """Create a DataFrame with impact data."""
@@ -342,7 +339,6 @@ def test_create_rank_dataframe_tiebreakers():
 
 
 # Test the compute_hegemony function
-
 @pytest.fixture
 def rank_data():
     """Create a DataFrame with rank data."""

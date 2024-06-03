@@ -1,37 +1,8 @@
-"""Load and basic processing of the data."""
+"""Basic processing of the data."""
 from typing import Tuple
 import logging
 
-import numpy as np
 import pandas as pd
-
-
-def load_data(file_path: str) -> pd.DataFrame:
-    """
-    Load the data from the CSV or TSV file.
-
-    :param file_path: str: Path to the CSV  or TSV file with the data
-
-    :return pd.DataFrame: Data from the file
-    """
-    if file_path.endswith('.tsv'):
-        sep = '\t'
-    elif file_path.endswith('.csv'):
-        sep = ','
-    else:
-        raise ValueError("Invalid file format. Only CSV and TSV files are supported.")
-
-    try:
-        data = pd.read_csv(file_path, low_memory=False, na_values=[np.NAN, '\\N', '..'], sep=sep)
-    except Exception as e:
-        logging.error("Error loading data from %s: %s", file_path, str(e))
-        raise
-
-    if data.empty:
-        logging.warning("The file %s is empty.", file_path)
-        raise ValueError("The file is empty.")
-
-    return data
 
 
 def process_data_and_merge(
@@ -72,22 +43,38 @@ def process_data_and_merge(
     """
     try:
         basics_df = basics_df[['tconst', 'titleType', 'primaryTitle', 'startYear']]
+    except KeyError as e:
+        logging.error("Error selecting columns from basics_df: %s", str(e))
+    try:
         ratings_df = ratings_df[['tconst', 'averageRating', 'numVotes']]
+    except KeyError as e:
+        logging.error("Error selecting columns from ratings_df: %s", str(e))
+    try:
         akas_df = akas_df[['titleId', 'region']]
         akas_df = akas_df.dropna(subset=['region'])
+    except KeyError as e:
+        logging.error("Error selecting columns from akas_df: %s", str(e))
+    try:
         crew_df = crew_df.drop(columns=['writers'])
+    except KeyError as e:
+        logging.error("Error dropping columns from crew_df: %s", str(e))
+    try:
         name_df = name_df[['nconst', 'primaryName']]
+    except KeyError as e:
+        logging.error("Error selecting columns from name_df: %s", str(e))
+    try:
         countries_df = countries_df[['alpha-2', 'alpha-3', 'name']]
     except KeyError as e:
-        logging.error("Error selecting columns from the dataframes: %s", str(e))
-        raise
+        logging.error("Error selecting columns from countries_df: %s", str(e))
 
     try:
         population_df = process_world_bank_data(population_df, 'Population')
+    except Exception as e:
+        logging.error("Error processing population_df: %s", str(e))
+    try:
         gdp_df = process_world_bank_data(gdp_df, 'GDP')
     except Exception as e:
-        logging.error("Error processing World Bank data: %s", str(e))
-        raise
+        logging.error("Error processing gdp_df: %s", str(e))
 
     try:
         basics_df, population_df, gdp_df = filter_years(
@@ -95,7 +82,6 @@ def process_data_and_merge(
         )
     except ValueError as e:
         logging.error("Error filtering the dataframes: %s", str(e))
-        raise
 
     try:
         merged_df = merge_data(
@@ -104,13 +90,12 @@ def process_data_and_merge(
         )
     except Exception as e:
         logging.error("Error merging the dataframes: %s", str(e))
-        raise
+        merged_df = pd.DataFrame()
 
     try:
         merged_df = clean(merged_df)
     except Exception as e:
         logging.error("Error cleaning the data: %s", str(e))
-        raise
 
     return merged_df
 
