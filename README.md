@@ -78,7 +78,7 @@ The main goal is to identify how directors' performance changes throughout their
 **Overview:**
 
 - The analysis processes a merged DataFrame containing movie data and focuses on directors with a minimum number of films.
-- It considers multiple sets of films (e.g., top 6, 10, 20, 50, 100, 200) to evaluate the career progression.
+- It considers multiple sets of films (e.g., 6, 10, 20, 50, 100, 200) to evaluate the career progression.
 - For each set, the analysis calculates the difference in average ratings and the number of votes between the first half and the last half of the directors' films.
 
 **Outcome:**
