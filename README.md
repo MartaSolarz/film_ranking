@@ -127,7 +127,7 @@ For each set, the top 10 directors with the highest rating or votes difference a
 **Example:**
 
 ```bash
-    python app.py -start 1990 -end 2020 ./data/title.basics.tsv ./data/title.ratings.tsv ./data/title.akas.tsv ./data/title.crew.tsv ./data/name.basics.tsv ./data/countries.csv ./data/population.csv ./data/gdp.csv 
+    python main.py -start 1990 -end 2020 ./data/title.basics.tsv ./data/title.ratings.tsv ./data/title.akas.tsv ./data/title.crew.tsv ./data/name.basics.tsv ./data/countries.csv ./data/population.csv ./data/gdp.csv 
 ```
 
 ## 4. How to run the tests?
