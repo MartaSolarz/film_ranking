@@ -147,7 +147,11 @@ The results are saved in the `profile_results.txt` file.
 - Pandas' merge function is quite expensive, it may be important to ensure data is properly sorted and indexed before linking to improve performance. It may also be beneficial to combine categorical data instead of strings to speed up the process.
 - It may also be beneficial to use int32 instead of int64 for columns with integer data to reduce memory usage.
 
-## 6. How to import the package?
+## 6. How to install and import the package?
+
+```bash
+    pip install <path-to-repository>
+```
 
 ```bash
     import film_ranking
